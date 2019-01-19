@@ -1,9 +1,8 @@
 .gradle
 /build/
-[._]*.s[a-v][a-z]
-[._]*.sw[a-p]
 .DS_Store
 Thumbs.db
+[._]*.sw[a-p]
 .idea/
 *.iml
 out/
