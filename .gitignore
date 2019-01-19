@@ -1,0 +1,9 @@
+.gradle
+/build/
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+out/
