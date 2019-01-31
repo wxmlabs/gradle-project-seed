@@ -1,0 +1,10 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+dependencies {
+    implementation project(':api')
+    implementation 'com.google.guava:guava'
+}
+
+// Define the main class for the application
+mainClassName = 'gradle.project.seed.App'

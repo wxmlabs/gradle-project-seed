@@ -1,29 +1,109 @@
 plugins {
-    id 'java'
+    // A Gradle plugin that provides Maven-like dependency management functionality
+    id "io.spring.dependency-management" version "1.0.6.RELEASE" apply false
 }
 
-group 'com.wxmlabs'
-version '1.0-SNAPSHOT'
+allprojects {
+    group 'com.wxmlabs'
+    version '1.0-SNAPSHOT'
 
-sourceCompatibility = 1.8
+    println "project $name"
 
-repositories {
-    mavenCentral()
+    ext {
+        isReleaseVersion = !version.endsWith('SNAPSHOT')
+
+        guava_version = '26.0-jre'
+
+        bom = [
+            "com.google.guava:guava:$guava_version"
+        ]
+    }
+
+    plugins.withType(JavaPlugin) {
+        // The JaCoCo plugin provides code coverage metrics for Java code via integration with JaCoCo
+        project.apply plugin: 'jacoco'
+        // Apply the groovy plugin to also add support for Groovy (needed for Spock)
+        project.apply plugin: 'groovy'
+
+        dependencies {
+            constraints {
+                bom.each {
+                    implementation it
+                }
+                implementation 'org.apache.commons:commons-math3:3.6.1'
+            }
+            // Use the latest Groovy version for Spock testing
+            testImplementation 'org.codehaus.groovy:groovy-all:2.5.4'
+            // Use the awesome Spock testing and specification framework even with Java
+            testImplementation 'org.spockframework:spock-core:1.2-groovy-2.5'
+            testImplementation 'junit:junit:4.12'
+        }
+
+        tasks.withType(JavaCompile) {
+            options.encoding = 'UTF-8'
+        }
+
+        tasks.withType(Javadoc) {
+            options.encoding = 'UTF-8'
+        }
+
+        tasks.withType(AbstractArchiveTask) {
+            archiveBaseName.set(rootProject.name)
+            archiveAppendix.set(project.name)
+        }
+
+        println targetCompatibility.majorVersion
+    }
+
+    plugins.withType(GroovyPlugin) {
+        tasks.withType(GroovyCompile) {
+            options.encoding = 'UTF-8'
+        }
+    }
+
+    plugins.withType(MavenPublishPlugin) {
+        publishing {
+            publications {
+                maven(MavenPublication) {
+                    artifactId = "${rootProject.name}-${project.name}"
+                }
+            }
+        }
+        if (project.hasProperty('releasesRepoUrl') || project.hasProperty('snapshotsRepoUrl')) {
+            repositories {
+                maven {
+                    if (isReleaseVersion && project.hasProperty('releasesRepoUrl')) {
+                        url = releasesRepoUrl
+                    } else if (project.hasProperty('snapshotsRepoUrl')) {
+                        url = snapshotsRepoUrl
+                    }
+                    if (project.hasProperty('uploadUserName') && project.hasProperty('uploadPassword')) {
+                        credentials {
+                            username = uploadUserName
+                            password = uploadPassword
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    afterEvaluate {
+        println "after evaluate:"
+        println "project name: ${project.name}"
+        println "project plugins: ${project.plugins*.class.name}"
+    }
 }
 
-dependencies {
-    // Use the latest Groovy version for Spock testing
-    testImplementation 'org.codehaus.groovy:groovy-all:2.5.4'
+configure(project(':dependencies')) {
+    apply plugin: "io.spring.dependency-management"
+    apply plugin: "maven-publish"
 
-    // Use the awesome Spock testing and specification framework even with Java
-    testImplementation 'org.spockframework:spock-core:1.2-groovy-2.5'
-    testImplementation 'junit:junit:4.12'
-}
-
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-}
-
-tasks.withType(Javadoc) {
-    options.encoding = 'UTF-8'
+    dependencyManagement {
+        dependencies {
+            bom.each {
+                dependency it
+            }
+        }
+    }
 }

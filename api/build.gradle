@@ -1,0 +1,8 @@
+apply plugin: 'java-library'
+
+dependencies {
+    implementation project(':core')
+
+    api 'org.apache.commons:commons-math3'
+    implementation 'com.google.guava:guava'
+}
