@@ -52,7 +52,33 @@ allprojects {
             archiveAppendix.set(project.name)
         }
 
-        println targetCompatibility.majorVersion
+        // use specified jdk to compile java source for specified target compatibility
+        if (project.hasProperty("jdk${targetCompatibility.majorVersion}Home")) {
+            String javaHome = project.property("jdk${targetCompatibility.majorVersion}Home")
+            File javaExecutablesPath = new File(javaHome, 'bin')
+            //noinspection GroovyAssignabilityCheck
+            def javaExecutables = [:].withDefault { execName ->
+                if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+                    execName = "${execName}.exe"
+                }
+                def executable = new File(javaExecutablesPath, execName.toString())
+                assert executable.exists(): "There is no ${execName} executable in ${javaExecutablesPath}"
+                executable.toString()
+            }
+            tasks.withType(JavaCompile) {
+                options.fork = true
+                options.forkOptions.javaHome = file(javaHome)
+            }
+            tasks.withType(Javadoc) {
+                executable = javaExecutables.javadoc
+            }
+            tasks.withType(Test) {
+                executable = javaExecutables.java
+            }
+            tasks.withType(JavaExec) {
+                executable = javaExecutables.java
+            }
+        }
     }
 
     plugins.withType(GroovyPlugin) {
