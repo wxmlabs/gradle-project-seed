@@ -53,21 +53,21 @@ build.gradle
 settings.gradle
 
 ```diff
-+include 'dependencies', 'api', 'core', 'cli', 'rpc', 'rpc-sdk', 'server', 'webgui'
++include 'platform', 'api', 'core', 'cli', 'rpc', 'rpc-sdk', 'server', 'webgui'
 ```
 
 各模块说明
 
-| 种子模块     | 说明                                               |
-| ------------ | -------------------------------------------------- |
-| dependencies | bills of materials，包含工程所需的所有第三方依赖。 |
-| core         | 接口定义和公共代码示例                             |
-| api          | 接口实现示例                                       |
-| cli          | 命令行工具示例                                     |
-| rpc          | RPC服务端示例                                      |
-| rpc-sdk      | RPC客户端示例                                      |
-| server       | 应用服务端示例                                     |
-| webgui       | 应用Web端示例                                      |
+| 种子模块 | 说明                                               |
+| -------- | -------------------------------------------------- |
+| platform | bills of materials，包含工程所需的所有第三方依赖。 |
+| core     | 接口定义和公共代码示例                             |
+| api      | 接口实现示例                                       |
+| cli      | 命令行工具示例                                     |
+| rpc      | RPC服务端示例                                      |
+| rpc-sdk  | RPC客户端示例                                      |
+| server   | 应用服务端示例                                     |
+| webgui   | 应用Web端示例                                      |
 
 ## 其他建议
 

@@ -1,135 +1,142 @@
 plugins {
-    // A Gradle plugin that provides Maven-like dependency management functionality
-    id "io.spring.dependency-management" version "1.0.6.RELEASE" apply false
 }
 
 allprojects {
-    group 'com.wxmlabs'
-    version '1.0-SNAPSHOT'
+  group 'com.wxmlabs'
+  version '1.0-SNAPSHOT'
 
-    println "project $name"
+  println "project $name"
 
-    ext {
-        isReleaseVersion = !version.endsWith('SNAPSHOT')
+  ext {
+    isReleaseVersion = !version.endsWith('SNAPSHOT')
+  }
 
-        guava_version = '26.0-jre'
+  plugins.withType(JavaPlugin) {
+    // The JaCoCo plugin provides code coverage metrics for Java code via integration with JaCoCo
+    project.apply plugin: 'jacoco'
+    // Apply the groovy plugin to also add support for Groovy (needed for Spock)
+    project.apply plugin: 'groovy'
 
-        bom = [
-            "com.google.guava:guava:$guava_version"
-        ]
+    repositories {
+      mavenCentral()
     }
 
-    plugins.withType(JavaPlugin) {
-        // The JaCoCo plugin provides code coverage metrics for Java code via integration with JaCoCo
-        project.apply plugin: 'jacoco'
-        // Apply the groovy plugin to also add support for Groovy (needed for Spock)
-        project.apply plugin: 'groovy'
-
-        dependencies {
-            constraints {
-                bom.each {
-                    implementation it
-                }
-                implementation 'org.apache.commons:commons-math3:3.6.1'
-            }
-            // Use the latest Groovy version for Spock testing
-            testImplementation 'org.codehaus.groovy:groovy-all:2.5.4'
-            // Use the awesome Spock testing and specification framework even with Java
-            testImplementation 'org.spockframework:spock-core:1.2-groovy-2.5'
-            testImplementation 'junit:junit:4.12'
-        }
-
-        tasks.withType(JavaCompile) {
-            options.encoding = 'UTF-8'
-        }
-
-        tasks.withType(Javadoc) {
-            options.encoding = 'UTF-8'
-        }
-
-        tasks.withType(AbstractArchiveTask) {
-            archiveBaseName.set(rootProject.name)
-            archiveAppendix.set(project.name)
-        }
-
-        // use specified jdk to compile java source for specified target compatibility
-        if (project.hasProperty("jdk${targetCompatibility.majorVersion}Home")) {
-            String javaHome = project.property("jdk${targetCompatibility.majorVersion}Home")
-            File javaExecutablesPath = new File(javaHome, 'bin')
-            //noinspection GroovyAssignabilityCheck
-            def javaExecutables = [:].withDefault { execName ->
-                if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-                    execName = "${execName}.exe"
-                }
-                def executable = new File(javaExecutablesPath, execName.toString())
-                assert executable.exists(): "There is no ${execName} executable in ${javaExecutablesPath}"
-                executable.toString()
-            }
-            tasks.withType(JavaCompile) {
-                options.fork = true
-                options.forkOptions.javaHome = file(javaHome)
-            }
-            tasks.withType(Javadoc) {
-                executable = javaExecutables.javadoc
-            }
-            tasks.withType(Test) {
-                executable = javaExecutables.java
-            }
-            tasks.withType(JavaExec) {
-                executable = javaExecutables.java
-            }
-        }
+    dependencies {
+      implementation platform(project(':platform'))
+      // Use the latest Groovy version for Spock testing
+      testImplementation 'org.codehaus.groovy:groovy-all:2.5.4'
+      // Use the awesome Spock testing and specification framework even with Java
+      testImplementation 'org.spockframework:spock-core:1.2-groovy-2.5'
+      testImplementation 'junit:junit:4.12'
     }
 
-    plugins.withType(GroovyPlugin) {
-        tasks.withType(GroovyCompile) {
-            options.encoding = 'UTF-8'
-        }
+    tasks.withType(JavaCompile) {
+      options.encoding = 'UTF-8'
     }
 
-    plugins.withType(MavenPublishPlugin) {
-        publishing {
-            publications {
-                maven(MavenPublication) {
-                    artifactId = "${rootProject.name}-${project.name}"
-                }
-            }
-        }
-        if (project.hasProperty('releasesRepoUrl') || project.hasProperty('snapshotsRepoUrl')) {
-            repositories {
-                maven {
-                    if (isReleaseVersion && project.hasProperty('releasesRepoUrl')) {
-                        url = releasesRepoUrl
-                    } else if (project.hasProperty('snapshotsRepoUrl')) {
-                        url = snapshotsRepoUrl
-                    }
-                    if (project.hasProperty('uploadUserName') && project.hasProperty('uploadPassword')) {
-                        credentials {
-                            username = uploadUserName
-                            password = uploadPassword
-                        }
-                    }
-                }
-            }
-        }
+    tasks.withType(Javadoc) {
+      options.encoding = 'UTF-8'
     }
 
-    afterEvaluate {
-        println "after evaluate:"
-        println "project name: ${project.name}"
-        println "project plugins: ${project.plugins*.class.name}"
+    tasks.withType(AbstractArchiveTask) {
+      archiveBaseName.set(rootProject.name)
+      archiveAppendix.set(project.name)
     }
+
+    // use specified jdk to compile java source for specified target compatibility
+    if (project.hasProperty("jdk${targetCompatibility.majorVersion}Home")) {
+      String javaHome = project.property("jdk${targetCompatibility.majorVersion}Home")
+      File javaExecutablesPath = new File(javaHome, 'bin')
+      //noinspection GroovyAssignabilityCheck
+      def javaExecutables = [:].withDefault { execName ->
+        if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+          execName = "${execName}.exe"
+        }
+        def executable = new File(javaExecutablesPath, execName.toString())
+        assert executable.exists(): "There is no ${execName} executable in ${javaExecutablesPath}"
+        executable.toString()
+      }
+      tasks.withType(JavaCompile) {
+        options.fork = true
+        options.forkOptions.javaHome = file(javaHome)
+      }
+      tasks.withType(Javadoc) {
+        executable = javaExecutables.javadoc
+      }
+      tasks.withType(Test) {
+        executable = javaExecutables.java
+      }
+      tasks.withType(JavaExec) {
+        executable = javaExecutables.java
+      }
+    }
+  }
+
+  plugins.withType(GroovyPlugin) {
+    tasks.withType(GroovyCompile) {
+      options.encoding = 'UTF-8'
+    }
+  }
+
+  plugins.withType(MavenPublishPlugin) {
+    publishing {
+      publications {
+        maven(MavenPublication) {
+          artifactId = "${rootProject.name}-${project.name}"
+        }
+      }
+    }
+    if (project.hasProperty('releasesRepoUrl') || project.hasProperty('snapshotsRepoUrl')) {
+      repositories {
+        maven {
+          if (isReleaseVersion && project.hasProperty('releasesRepoUrl')) {
+            url = releasesRepoUrl
+          } else if (project.hasProperty('snapshotsRepoUrl')) {
+            url = snapshotsRepoUrl
+          }
+          if (project.hasProperty('uploadUserName') && project.hasProperty('uploadPassword')) {
+            credentials {
+              username = uploadUserName
+              password = uploadPassword
+            }
+          }
+        }
+      }
+    }
+  }
+
+  afterEvaluate {
+    println "after evaluate:"
+    println "project name: ${project.name}"
+    println "project plugins: ${project.plugins*.class.name}"
+  }
 }
 
-configure(project(':dependencies')) {
-    apply plugin: "io.spring.dependency-management"
-    apply plugin: "maven-publish"
+project(':platform') {
+  apply plugin: 'java-platform'
+  apply plugin: "maven-publish"
 
-    dependencyManagement {
-        dependencies {
-            bom.each {
-                dependency it
-            }
-        }
+  ext {
+    guava_version = '26.0-jre'
+    math3_version = '3.6.1'
+  }
+
+  dependencies {
+    constraints {
+      api platform("com.google.guava:guava:$guava_version")
+      api platform("org.apache.commons:commons-math3:$math3_version")
     }
+  }
+
+  javaPlatform {
+    allowDependencies()
+  }
+
+  publishing {
+    publications {
+      maven(MavenPublication) {
+        from components.javaPlatform
+      }
+    }
+  }
 }
